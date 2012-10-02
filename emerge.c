@@ -4,27 +4,33 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+#define num_files 8
+
 void Merge_Sort(int * array, int left, int right);
 void Merge(int * array, int left, int mid, int right);
 
 void Merge_Process_Generator();
-void Sort_Process_Generator();
+void Sort_Process_Generator(FILE * file1, FILE * file2);
+void File_read_sort();
 
+FILE * files [num_files];
 
 int main(void){
+  char fname[16];
 
-  
-  
+  for(int i = 0;i < num_files;i++){// Loop to open all files for reading with name "filen" in current dir
+    sprintf(fname,"file%d",i);
+    files[i]= fopen(fname, "r");
+    if (files[i] == NULL)
+      {
+	printf("Can't open %s \n",fname);
+	exit(1);
+      }    
+  }
+
 
 
   Merge_Process_Generator();
-
-
-
-
-
-
-
 
 
   return 0; 
@@ -33,7 +39,7 @@ int main(void){
 
 void Merge_Process_Generator(){// Parent Process generator for merging
 
-  int Number_of_Files = 8;
+  int Number_of_Files = num_files;
   int PP_nums = Number_of_Files / 2; //Compute number of parent processes 
   pid_t ppids[PP_nums]; //Parent Process numbers 
 
@@ -47,29 +53,58 @@ void Merge_Process_Generator(){// Parent Process generator for merging
     } else if ( ppids[i] == 0){
       printf("Parent merger process %i generated\n", getpid());
       //Start parent merger process code 
-      Sort_Process_Generator();// generate child processes for the sort level
+      Sort_Process_Generator(files[i],files[i+1]);// generate child processes for the sort level
+
       exit(0);
     }
 
   }
 
-  
+
+}
+void Sort_Process_Generator(FILE * file1, FILE * file2 ){//Child generator process 
+ 
+  pid_t cpids[3];
+  int i = 0;
+  //set pipe to write
+  //open file
+
+
+  for(i = 0; i < 2; i++){
+     
+    cpids[i] = fork();
+
+    if(cpids[i] < 0){
+      perror("Failed to fork parent processes");
+    } else if ( cpids[i] == 0){
+      printf("Child of pid %i sorter process generated\n", getppid());
+      if(i == 0){
+
+
+      }else if (i == 1){
+
+
+      }
+
+      //send individual file to read_sort
+        exit(0);
+    }
+    
+  }
+
+
+}
+void File_read_sort(){
+
+
+
+
 
 
 
 }
-void Sort_Process_Generator(){//Child parent 
 
 
-
-
-
-
-
-
-
-
-}
 void Merge_Sort(int * array, int left, int right)
 {
   int mid = (left+right)/2;
