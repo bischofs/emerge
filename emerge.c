@@ -11,7 +11,7 @@ void Merge(int * array, int left, int mid, int right);
 
 void Merge_Process_Generator();
 void Sort_Process_Generator(FILE * file1, FILE * file2);
-void File_read_sort();
+void File_read_sort(FILE * file);
 
 FILE * files [num_files];
 
@@ -32,29 +32,32 @@ int main(void){
 
   Merge_Process_Generator();
 
+  sleep(15);
 
   return 0; 
 
 }
-
-void Merge_Process_Generator(){// Parent Process generator for merging
+/*
+Parent Process Generator
+Called by main to generate n/2 file merging parent processes
+*/
+void Merge_Process_Generator(){
 
   int Number_of_Files = num_files;
   int PP_nums = Number_of_Files / 2; //Compute number of parent processes 
   pid_t ppids[PP_nums]; //Parent Process numbers 
 
 
-  for(int i = 0; i < PP_nums; i++){
+  for(int i = 0,j = 0; i < PP_nums; i++,j+=2){
     
     ppids[i] = fork();
   
     if(ppids[i] < 0){
       perror("Failed to fork parent processes");
     } else if ( ppids[i] == 0){
-      printf("Parent merger process %i generated\n", getpid());
+      //printf("Parent merger process %i generated\n", getpid());
       //Start parent merger process code 
-      Sort_Process_Generator(files[i],files[i+1]);// generate child processes for the sort level
-
+      Sort_Process_Generator(files[j],files[j+1]);// generate child processes for the sort level
       exit(0);
     }
 
@@ -62,7 +65,13 @@ void Merge_Process_Generator(){// Parent Process generator for merging
 
 
 }
-void Sort_Process_Generator(FILE * file1, FILE * file2 ){//Child generator process 
+/*
+**Child process generator**
+
+Called by parent process and recieves the two files for each 
+child sorting process
+*/
+void Sort_Process_Generator(FILE * file1, FILE * file2 ){ 
  
   pid_t cpids[3];
   int i = 0;
@@ -77,12 +86,14 @@ void Sort_Process_Generator(FILE * file1, FILE * file2 ){//Child generator proce
     if(cpids[i] < 0){
       perror("Failed to fork parent processes");
     } else if ( cpids[i] == 0){
-      printf("Child of pid %i sorter process generated\n", getppid());
+      //printf("Child of pid %i sorter process generated\n", getppid());
       if(i == 0){
 
+	File_read_sort(file1);
 
       }else if (i == 1){
-
+	
+	File_read_sort(file2);
 
       }
 
@@ -94,11 +105,13 @@ void Sort_Process_Generator(FILE * file1, FILE * file2 ){//Child generator proce
 
 
 }
-void File_read_sort(){
+void File_read_sort(FILE * file){
 
+  char name[16];
 
+  fgets(name, 16, file);
 
-
+  printf("%s",name);
 
 
 
