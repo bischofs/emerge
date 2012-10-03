@@ -4,7 +4,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#define num_files 8
+#define NUM_FILES 4
+#define PIPE_BUFFER 50
 
 void Merge_Sort(int * array, int left, int right);
 void Merge(int * array, int left, int mid, int right);
@@ -13,12 +14,12 @@ void Merge_Process_Generator();
 void Sort_Process_Generator(FILE * file1, FILE * file2);
 void File_read_sort(FILE * file);
 
-FILE * files [num_files];
+FILE * files [NUM_FILES];
 
 int main(void){
   char fname[16];
 
-  for(int i = 0;i < num_files;i++){// Loop to open all files for reading with name "filen" in current dir
+  for(int i = 0;i < NUM_FILES;i++){// Loop to open all files for reading with name "filen" in current dir
     sprintf(fname,"file%d",i);
     files[i]= fopen(fname, "r");
     if (files[i] == NULL)
@@ -27,8 +28,6 @@ int main(void){
 	exit(1);
       }    
   }
-
-
 
   Merge_Process_Generator();
 
@@ -43,12 +42,18 @@ Called by main to generate n/2 file merging parent processes
 */
 void Merge_Process_Generator(){
 
-  int Number_of_Files = num_files;
+  int Number_of_Files = NUM_FILES;
   int PP_nums = Number_of_Files / 2; //Compute number of parent processes 
   pid_t ppids[PP_nums]; //Parent Process numbers 
 
+  int pipefds[PP_nums][2];
+  char buf[PP_nums][PIPE_BUFFER];
+
 
   for(int i = 0,j = 0; i < PP_nums; i++,j+=2){
+
+
+    pipe(pipefds[i]); //build pipes off of parents    
     
     ppids[i] = fork();
   
@@ -57,7 +62,11 @@ void Merge_Process_Generator(){
     } else if ( ppids[i] == 0){
       //printf("Parent merger process %i generated\n", getpid());
       //Start parent merger process code 
+     
+
       Sort_Process_Generator(files[j],files[j+1]);// generate child processes for the sort level
+
+
       exit(0);
     }
 
@@ -75,24 +84,36 @@ void Sort_Process_Generator(FILE * file1, FILE * file2 ){
  
   pid_t cpids[3];
   int i = 0;
+  int fd[2],fd2[2];
+
   //set pipe to write
   //open file
-
+  pipe(fd); //construct two pipes, one for each sorting children
+  pipe(fd2);
+  
+  close(fd[1]);
+  close(fd2[1]);  
 
   for(i = 0; i < 2; i++){
      
     cpids[i] = fork();
 
     if(cpids[i] < 0){
+     
       perror("Failed to fork parent processes");
-    } else if ( cpids[i] == 0){
+    
+    } else if ( cpids[i] == 0){// Child Sorter Code Starts
+     
       //printf("Child of pid %i sorter process generated\n", getppid());
-      if(i == 0){
 
+      if(i == 0){
+	
+	close(fd[0]);
 	File_read_sort(file1);
 
       }else if (i == 1){
 	
+	close(fd2[0]);
 	File_read_sort(file2);
 
       }
@@ -107,14 +128,19 @@ void Sort_Process_Generator(FILE * file1, FILE * file2 ){
 }
 void File_read_sort(FILE * file){
 
-  char name[16];
+  int array[100];
+  int i = 0;
 
-  fgets(name, 16, file);
+    fscanf(file, "%d", &array[0]);
+    printf("%i ",array[0]);
 
-  printf("%s",name);
-
-
-
+    /*
+    while (!feof(file)){
+    fscanf(file, "%d", &array[i]);
+    i++;
+    printf("%i ",array[i]);
+  }
+    */
 }
 
 
