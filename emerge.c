@@ -1,13 +1,20 @@
+/*
+ * PARRALEL EXTERNAL MERGE SORT
+ * Steve Bischoff
+ * OS - Wolffe
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <string.h>
-#define NUM_FILES 4
-#define PIPE_BUFFER 50
-#define MAX_INTS 15
+#include <limits.h>
 
+#define NUM_FILES 8 //Number of files in the current directory
+#define MAX_INTS 20 //Maximum Number of integers in a file
+#define MAX_INT_S 65534 //Maximum integer size
 
 void Merge_Sort(int * array, int left, int right);
 void Merge(int * array, int left, int mid, int right);
@@ -15,7 +22,7 @@ void Merge(int * array, int left, int mid, int right);
 void Merge_Process_Generator();
 void Sort_Process_Generator(FILE * file1, FILE * file2, int * merged);
 int File_read_sort(FILE * file, int * array,int size);
-int comp(const int * a,const int * b); 
+int Comp(const int * a,const int * b); 
 
 FILE * files [NUM_FILES];
 FILE * master;
@@ -43,7 +50,7 @@ int main(void){
 
 }
 /*
-Parent Process Generator
+************* Parent Process Generator ********************
 Called by main to generate n/2 file merging parent processes
 */
 void Merge_Process_Generator(){
@@ -54,29 +61,30 @@ void Merge_Process_Generator(){
   pid_t ppids[PP_nums]; //Parent Process numbers 
 
   int fds[PP_nums][2];
-  //  char buf[PP_nums][PIPE_BUFFER];
-  int length = NUM_FILES * MAX_INTS;
-  int merged_l1[MAX_INTS * 2]={0};//make this double MAX_NUMBER_NUMS //merge level one array to pass to parents  
+  int length = NUM_FILES * MAX_INTS;// Max size of final array
+  int merged_l1[MAX_INTS * 2]={0};// merge level one array to pass to parents  
   int merged_l0[NUM_FILES * MAX_INTS];//merge level 0 master process 
-  //int temp[NUM_FILES * MAX_INTS];
+
   
   for(int k = 0; k < length; k++){
-    merged_l0[k] = 65534;
+    merged_l0[k] = MAX_INT_S;
   }
 
   for(int i = 0,j = 0; i < PP_nums; i++,j+=2){
-
+    
     pipe(fds[i]); //build pipes off of parents    
     
     ppids[i] = fork();
   
+
+    
     if(ppids[i] < 0){
     
       perror("Failed to fork parent processes");
 
     } 
     else if ( ppids[i] == 0){//PARENT MERGER LEVEL 1*******************************************************************************
-      //printf("Parent merger process %i generated\n", getpid());
+      printf("Parent merger process %i generated\n", getpid());
       //Start parent merger process code 
       
       close(fds[i][0]);//close read end     
@@ -100,7 +108,6 @@ void Merge_Process_Generator(){
   int readbuffer[length];
   int tmpbuffer[length];
     
-
   
   for(int i = 0;i < PP_nums;i++){
     
@@ -109,13 +116,15 @@ void Merge_Process_Generator(){
     
     read(fds[i][0], &readbuffer, sizeof(readbuffer));//read in buffer from parents
   
+    close(fds[i][0]); //close read end
+
     for(int i1=0;i1<length;i1++){// clean up the buffer from the lower level
       
-      if( readbuffer[i1] == 65534){
+      if( readbuffer[i1] == MAX_INT_S){
 	
 	for(int s=i1;s < length;s++){
 
-	  readbuffer[s] = 65534;
+	  readbuffer[s] = MAX_INT_S;
 	  
 	}
       
@@ -123,8 +132,6 @@ void Merge_Process_Generator(){
    
     } 
          
-   
-    
     for(int j=0;j<length;j++){//copy current merged array into a temporary array
       tmpbuffer[j]=merged_l0[j];
     }
@@ -144,16 +151,6 @@ void Merge_Process_Generator(){
       
     }
 
-    if(i == (PP_nums - 1)){
-      for(int n=0;n < length;n++){
-
-	//	printf("%i ", merged_l0[n]);
-	
-      } 
-    }
-
-
-
   }
 
   char * name = "Master_File";
@@ -162,7 +159,7 @@ void Merge_Process_Generator(){
 
   for(int i = 0;i < length;i++){
 
-    if(merged_l0[i]==65534){
+    if(merged_l0[i] == MAX_INT_S){
       break;
     }
 
@@ -171,27 +168,22 @@ void Merge_Process_Generator(){
   }
 
 
-    //******************************************************************************************************************************
-
-
-
+//******************************************************************************************************************************
     
 }
 
 /*
-**Child process generator**
+******************* Child process generator *************************
 
 Called by parent process and recieves the two files for each 
 child sorting process
 */
-void Sort_Process_Generator(FILE * file1, FILE * file2,int * merged ){ 
+void Sort_Process_Generator(FILE * file1, FILE * file2, int * merged ){ 
  
   pid_t cpids[3];
   int i = 0;
   int fd[2],fd2[2];
 
-  //set pipe to write
-  //open file
   pipe(fd); //construct two pipes, one for each sorting children
   pipe(fd2);
   
@@ -207,49 +199,63 @@ void Sort_Process_Generator(FILE * file1, FILE * file2,int * merged ){
     } 
     else if ( cpids[i] == 0){// CHILD SORT LEVEL **********************************************************************************************
      
-      //printf("Child of pid %i sorter process generated\n", getppid());
+      printf("Child of pid %i sorter process generated\n", getppid());
 
       if(i == 0){
 
-	int numbers[15]= { [0 ... 14] = 65534 }; // strange compiler addon, fills entire array with 16b - 1. use it for a terminating character	
-	//int length;
+	int numbers[MAX_INTS]; // strange compiler addon, fills entire array with 16b - 1. use it for a terminating character	
+	
+	for(int k = 0; k <  MAX_INTS; k++){
+	  numbers[k] = MAX_INT_S;
+	}
+       
 	
 	close(fd[0]);
+	
+
 	
 	File_read_sort(file1, numbers,MAX_INTS);
 	
 	write(fd[1], &numbers, sizeof(numbers));
 
 	close(fd[1]);
-
+	
+	exit(0);
+     
       }else if (i == 1){
 
-	int numbers1[15]= { [0 ... 14] = 65534 };
-	//int length1;
+	int numbers1[MAX_INTS];
+
+	
+
+	for(int k = 0; k <  MAX_INTS; k++){
+	  numbers1[k] = MAX_INT_S;
+	}
+
 
 	close(fd2[0]);
-	
+
+
 	File_read_sort(file2, numbers1,MAX_INTS);
 
 	write(fd2[1], &numbers1, sizeof(numbers1));
 
 	close(fd2[1]);
 
+	exit(0);
       }
       
       
-      exit(0);
+      
     }//***************************************************************************************************************************************************
   }
 
 
   int readbuffer [MAX_INTS]={0};
   int readbuffer1 [MAX_INTS]={0};
- 
   
   close(fd[1]);
   close(fd2[1]);  
-      
 
   read(fd[0], &readbuffer, sizeof(readbuffer));
 
@@ -261,7 +267,8 @@ void Sort_Process_Generator(FILE * file1, FILE * file2,int * merged ){
 
   int k,j;
   
-  
+
+
   for(i=0,j=0,k=0;k<(MAX_INTS * 2);k++){//MERGER code for 1st level
     
     if(readbuffer[i] < readbuffer1[j]){
@@ -281,24 +288,27 @@ void Sort_Process_Generator(FILE * file1, FILE * file2,int * merged ){
 }
 int File_read_sort(FILE * file, int * array, int size){
 
-  int i = 0;// j = 0;
+  int i = 0;
 
-  while(!feof(file)){
-    fscanf(file, "%d", &array[i]);
-    i++;
-  }
 
-  qsort(array,size,sizeof(int),comp);
+ while(!feof(file)){
+   fscanf(file, "%d", &array[i]);
+   i++;
 
+ }
+  
+
+  qsort(array,size,sizeof(int),Comp);
+
+  fclose(file);
 
   return i;
 
 
   //i represents the length of data to be piped up 
-  //Dont Forget to close the files somehow!!
 }
 
-int comp(const int * a,const int * b) 
+int Comp(const int * a,const int * b) 
 {
   if (*a==*b)
     return 0;
