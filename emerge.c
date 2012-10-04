@@ -95,8 +95,9 @@ void Merge_Process_Generator(){
  //MASTER MERGER LEVEL 0***************************************************************************************************
 
   for(int i = 0;i < PP_nums;i++){
-    
-    int readbuffer[40];
+    printf("%i ",i);  
+    printf(" %i ",PP_nums);  
+    int readbuffer[30];
     int tmpbuffer[length];
 
     close(fds[i][1]);//close write end
@@ -104,29 +105,30 @@ void Merge_Process_Generator(){
     read(fds[i][0], &readbuffer, sizeof(readbuffer));//read in buffer from parents
   
     
-    for(int i1=0;i1<(MAX_INTS * 2);i1++){// clean up the buffer from the lower level
-   
+    for(int i1=0;i1<length;i1++){// clean up the buffer from the lower level
+      
       if( readbuffer[i1] == 65534){
 	
-	for(int s=i1;s < 40;s++){
+	for(int s=i1;s < length;s++){
 
 	  readbuffer[s] = 65534;
-
+	  
 	}
-	
+      
       }
       
-
+      printf("%i ", readbuffer[i1]);      
    
     } 
-    
+         
+   
+    /*
     for(int j=0;j<length;j++){//copy current merged array into a temporary array
       tmpbuffer[j]=merged_l0[j];
-      printf("%i ", tmpbuffer[j]);
     }
 
    
-    for(int i2=0,j=0,k=0;k<40;k++){//MERGER code for 1st level
+    for(int i2=0,j=0,k=0;k<length;k++){//MERGER code for 1st level
     
       if(readbuffer[i2] < tmpbuffer[j]){
 	merged_l0[k]=readbuffer[i2];
@@ -140,19 +142,18 @@ void Merge_Process_Generator(){
     
     }
     
-   
-    printf("\n");
-  }
-
-
-
-  for(int i = 0;i < length;i++){
-
-
-    
+    */
+ 
 
 
   }
+
+
+
+ 
+
+  
+
 
 
 
@@ -199,7 +200,7 @@ void Sort_Process_Generator(FILE * file1, FILE * file2,int * merged ){
 	
 	close(fd[0]);
 	
-	File_read_sort(file1, numbers,20);
+	File_read_sort(file1, numbers,MAX_INTS);
 	
 	write(fd[1], &numbers, sizeof(numbers));
 
@@ -212,7 +213,7 @@ void Sort_Process_Generator(FILE * file1, FILE * file2,int * merged ){
 
 	close(fd2[0]);
 	
-	File_read_sort(file2, numbers1,20);
+	File_read_sort(file2, numbers1,MAX_INTS);
 
 	write(fd2[1], &numbers1, sizeof(numbers1));
 
