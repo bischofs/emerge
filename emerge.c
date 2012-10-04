@@ -48,7 +48,7 @@ void Merge_Process_Generator(){
   pid_t ppids[PP_nums]; //Parent Process numbers 
 
   int pipefds[PP_nums][2];
-  char buf[PP_nums][PIPE_BUFFER];
+  //  char buf[PP_nums][PIPE_BUFFER];
 
   for(int i = 0,j = 0; i < PP_nums; i++,j+=2){
 
@@ -99,68 +99,76 @@ void Sort_Process_Generator(FILE * file1, FILE * file2 ){
 
     if(cpids[i] < 0){
      
-      perror("Failed to fork parent processes");
+      perror("Failed to fork child processes");
     
-    } else if ( cpids[i] == 0){// CHILD SORT LEVEL **********************************************************************************************
+    } 
+    else if ( cpids[i] == 0){// CHILD SORT LEVEL **********************************************************************************************
      
       //printf("Child of pid %i sorter process generated\n", getppid());
 
       if(i == 0){
 
 	int numbers[20]= { [0 ... 19] = 65534 }; // strange compiler addon, fills entire array with 16b - 1. use it for a terminating character	
-	int length;
-
+	//	int length;
+	
 	close(fd[0]);
 	
-	length = File_read_sort(file1, numbers,20);
+	File_read_sort(file1, numbers,20);
 
-	write(fd[1], numbers, length);
+	write(fd[1], &numbers, sizeof(numbers));
 
       }else if (i == 1){
 
 	int numbers1[20]= { [0 ... 19] = 65534 };
-	int length1;
+	//int length1;
 
 	close(fd2[0]);
 	
-	length1 = File_read_sort(file2, numbers1,20);
+       File_read_sort(file2, numbers1,20);
 
-	write(fd2[1], numbers1, length1);
+	write(fd2[1], &numbers1, sizeof(numbers1));
 
       }
-
-     
-        exit(0);
-    }//***************************************************************************************************************************************************
-    else{    
       
-      int readbuffer [20];
-      int readbuffer1 [20];
-
-      close(fd[1]);
-      close(fd2[1]);  
-
-      read(fd[0], readbuffer, sizeof(readbuffer));
-
-      read(fd2[0], readbuffer1, sizeof(readbuffer1));
-
-      for( int k = 0; k < 20; k++){
-	printf("%i ", readbuffer[k]);
-      }
-     
-
-
-
-    }
-
-
+      
+      exit(0);
+    }//***************************************************************************************************************************************************
   }
+  int readbuffer [20]={0};
+  int readbuffer1 [20]={0};
+  close(fd[1]);
+  close(fd2[1]);  
+      
+  //   while(!feof(fd[0])){
+  //fscanf(fd[0], "%d", &readbuffer[n]);
+  //	n++;
+  // }
+  read(fd[0], &readbuffer, sizeof(readbuffer));
+
+  read(fd2[0], &readbuffer1, sizeof(readbuffer1));
+  
+  int k;
+  
+
+  
+  for( k = 0; k < 10; k++){
+    printf("%i ", readbuffer[k]);
+  }
+  
+
+  
+  for(k = 0; k < 10; k++){
+    printf("%i ", readbuffer1[k]);
+   }
+  
+  
+
 
 
 }
 int File_read_sort(FILE * file, int * array, int size){
 
-  int i = 0, j = 0;
+  int i = 0;// j = 0;
 
   while(!feof(file)){
     fscanf(file, "%d", &array[i]);
