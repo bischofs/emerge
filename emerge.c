@@ -3,7 +3,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <sys/types.h>
-
+#include <string.h>
 #define NUM_FILES 4
 #define PIPE_BUFFER 50
 #define MAX_INTS 15
@@ -56,7 +56,7 @@ void Merge_Process_Generator(){
   int length = NUM_FILES * MAX_INTS;
   int merged_l1[MAX_INTS * 2]={0};//make this double MAX_NUMBER_NUMS //merge level one array to pass to parents  
   int merged_l0[NUM_FILES * MAX_INTS];//merge level 0 master process 
-  int temp[NUM_FILES * MAX_INTS];
+  //int temp[NUM_FILES * MAX_INTS];
   
   for(int k = 0; k < length; k++){
     merged_l0[k] = 65534;
@@ -94,17 +94,19 @@ void Merge_Process_Generator(){
 
  //MASTER MERGER LEVEL 0***************************************************************************************************
 
+
+  int readbuffer[length];
+  int tmpbuffer[length];
+    
+
+  
   for(int i = 0;i < PP_nums;i++){
-    printf("%i ",i);  
-    printf(" %i ",PP_nums);  
-    int readbuffer[30];
-    int tmpbuffer[length];
+    
 
     close(fds[i][1]);//close write end
- 
+    
     read(fds[i][0], &readbuffer, sizeof(readbuffer));//read in buffer from parents
   
-    
     for(int i1=0;i1<length;i1++){// clean up the buffer from the lower level
       
       if( readbuffer[i1] == 65534){
@@ -117,33 +119,39 @@ void Merge_Process_Generator(){
       
       }
       
-      printf("%i ", readbuffer[i1]);      
+      //      printf("%i ", readbuffer[i1]);      
    
     } 
          
    
-    /*
+    
     for(int j=0;j<length;j++){//copy current merged array into a temporary array
       tmpbuffer[j]=merged_l0[j];
     }
-
-   
-    for(int i2=0,j=0,k=0;k<length;k++){//MERGER code for 1st level
     
-      if(readbuffer[i2] < tmpbuffer[j]){
-	merged_l0[k]=readbuffer[i2];
-	i++;
+           
+    for(int i2=0,j2=0,k2=0;k2<length;k2++){//MERGER code for 1st level
+    
+      if(readbuffer[i2] < tmpbuffer[j2]){
+	merged_l0[k2]=readbuffer[i2];
+	i2++;
 	
       }
       else {
-	merged_l0[k]=tmpbuffer[j];
-	j++;
+	merged_l0[k2]=tmpbuffer[j2];
+	j2++;
       }
-    
+      
     }
-    
-    */
- 
+
+    if(i == (PP_nums - 1)){
+      for(int n=0;n < length;n++){
+
+	printf("%i ", merged_l0[n]);
+	
+      } 
+    }
+
 
 
   }
