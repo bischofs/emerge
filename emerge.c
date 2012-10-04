@@ -18,6 +18,8 @@ int File_read_sort(FILE * file, int * array,int size);
 int comp(const int * a,const int * b); 
 
 FILE * files [NUM_FILES];
+FILE * master;
+
 
 int main(void){
   char fname[16];
@@ -118,8 +120,6 @@ void Merge_Process_Generator(){
 	}
       
       }
-      
-      //      printf("%i ", readbuffer[i1]);      
    
     } 
          
@@ -147,7 +147,7 @@ void Merge_Process_Generator(){
     if(i == (PP_nums - 1)){
       for(int n=0;n < length;n++){
 
-	printf("%i ", merged_l0[n]);
+	//	printf("%i ", merged_l0[n]);
 	
       } 
     }
@@ -156,17 +156,25 @@ void Merge_Process_Generator(){
 
   }
 
+  char * name = "Master_File";
 
+  master = fopen(name,"w");
 
- 
+  for(int i = 0;i < length;i++){
 
-  
+    if(merged_l0[i]==65534){
+      break;
+    }
 
+    fprintf(master,"%i\n",merged_l0[i]);
 
-
+  }
 
 
     //******************************************************************************************************************************
+
+
+
     
 }
 
@@ -233,6 +241,7 @@ void Sort_Process_Generator(FILE * file1, FILE * file2,int * merged ){
       exit(0);
     }//***************************************************************************************************************************************************
   }
+
 
   int readbuffer [MAX_INTS]={0};
   int readbuffer1 [MAX_INTS]={0};
