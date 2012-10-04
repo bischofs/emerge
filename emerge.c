@@ -107,11 +107,13 @@ void Merge_Process_Generator(){
 
   int readbuffer[length];
   int tmpbuffer[length];
+
+
     
   
   for(int i = 0;i < PP_nums;i++){
     
-
+    sleep(1);
     close(fds[i][1]);//close write end
     
     read(fds[i][0], &readbuffer, sizeof(readbuffer));//read in buffer from parents
@@ -153,6 +155,15 @@ void Merge_Process_Generator(){
 
   }
 
+
+  printf("Master Merger level 1 data recieved");
+  printf(" . ");
+  sleep(1);
+  printf(". ");
+  sleep(1); 
+  printf(". merging and saving to master file\n");  
+  
+  
   char * name = "Master_File";
 
   master = fopen(name,"w");
@@ -186,7 +197,7 @@ void Sort_Process_Generator(FILE * file1, FILE * file2, int * merged ){
 
   pipe(fd); //construct two pipes, one for each sorting children
   pipe(fd2);
-  
+ 
 
   for(i = 0; i < 2; i++){
      
@@ -267,6 +278,12 @@ void Sort_Process_Generator(FILE * file1, FILE * file2, int * merged ){
 
   int k,j;
   
+  printf("Merger level 2 data recieved");
+  printf(" . ");
+  sleep(1);
+  printf(". ");
+  sleep(1); 
+  printf(". merging and sending to master process\n");
 
 
   for(i=0,j=0,k=0;k<(MAX_INTS * 2);k++){//MERGER code for 1st level
@@ -296,8 +313,13 @@ int File_read_sort(FILE * file, int * array, int size){
    i++;
 
  }
-  
-
+ 
+ printf(". ");
+ sleep(1);
+ printf(". ");
+ sleep(1);
+ printf(". file sorted...sending data upstream\n");
+ 
   qsort(array,size,sizeof(int),Comp);
 
   fclose(file);
